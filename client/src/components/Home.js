@@ -1,53 +1,49 @@
-import React, { useEffect, useState } from "react";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Home = ({ user }) => {
-  const [properties, setProperties] = useState([]);
-
-  useEffect(() => {
-    if (user) {
-      fetch(`/properties/${user.id}`)
-        .then((response) => response.json())
-        .then((data) => setProperties(data.properties));
-    }
-  }, [user]);
-
-  const handlePayTax = (propertyId) => {
-    fetch("/pay-tax", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ property_id: propertyId }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.message) {
-          alert(data.message);
-          // Refresh properties after paying tax
-          fetch(`/properties/${user.id}`)
-            .then((response) => response.json())
-            .then((data) => setProperties(data.properties));
-        }
-      });
-  };
-
   return (
-    <div className="home">
-      <h2>Welcome, {user ? user.name : "Guest"}</h2>
-      <div className="properties">
-        <h3>My Properties</h3>
-        {properties.map((property) => (
-          <div key={property.id} className="property">
-            <p>Name: {property.name}</p>
-            <p>Tax Paid: {property.tax_paid ? "Yes" : "No"}</p>
-            {!property.tax_paid && (
-              <button onClick={() => handlePayTax(property.id)}>
-                Pay Tax
-              </button>
-            )}
-            {property.next_payment_date && (
-              <p>Next Payment Due: {property.next_payment_date}</p>
-            )}
+    <div className="main-content">
+      <div className="home-container">
+        <div className="home-header">
+          <h1>Welcome to NID Tax Payment System</h1>
+          <p>Streamline your tax payments with our secure and efficient platform. Manage your tax obligations with ease and confidence.</p>
+        </div>
+
+        {!user ? (
+          <div className="auth-section">
+            <div className="auth-buttons">
+              <Link to="/login" className="auth-button login-button">
+                Login to Your Account
+              </Link>
+              <Link to="/signup" className="auth-button signup-button">
+                Create New Account
+              </Link>
+            </div>
+            <div className="features-grid">
+              <div className="feature-card">
+                <h3>Secure Payments</h3>
+                <p>Bank-grade security for all your transactions</p>
+              </div>
+              <div className="feature-card">
+                <h3>Easy Tracking</h3>
+                <p>Monitor your payment history and receipts</p>
+              </div>
+              <div className="feature-card">
+                <h3>24/7 Access</h3>
+                <p>Manage your taxes anytime, anywhere</p>
+              </div>
+            </div>
           </div>
-        ))}
+        ) : (
+          <div className="welcome-back">
+            <h2>Welcome back, {user.name}!</h2>
+            <p>You're already logged in. Would you like to go to your dashboard?</p>
+            <Link to="/dashboard" className="auth-button login-button">
+              Go to Dashboard
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

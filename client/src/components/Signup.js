@@ -1,93 +1,163 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [nid, setNid] = useState("");
-  const [citizenshipNo, setCitizenshipNo] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+const Signup = ({ setUser }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    nid: '',
+    citizenship_no: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (!formData.name || !formData.nid || !formData.password || !formData.citizenship_no) {
+      setError('Please fill in all required fields');
       return;
     }
 
     try {
-      const response = await fetch("/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:5000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          name,
-          address,
-          phone,
-          nid,
-          citizenship_no: citizenshipNo,
-          password,
+          name: formData.name,
+          address: formData.address,
+          phone: formData.phone,
+          nid: formData.nid,
+          citizenship_no: formData.citizenship_no,
+          password: formData.password
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to sign up");
+      const data = await response.json();
+      
+      if (response.ok) {
+        // After successful signup, log the user in
+        const loginResponse = await fetch('http://localhost:5000/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nid: formData.nid,
+            password: formData.password
+          }),
+        });
+        
+        const loginData = await loginResponse.json();
+        
+        if (loginResponse.ok) {
+          setUser(loginData.user);
+          navigate('/dashboard');
+        } else {
+          setError('Account created but login failed. Please try logging in.');
+          navigate('/login');
+        }
+      } else {
+        setError(data.error || 'Registration failed. Please try again.');
       }
-
-      alert("Account created successfully!");
     } catch (err) {
-      setError(err.message);
+      setError('An error occurred. Please try again.');
     }
   };
 
   return (
-    <div className="signup">
-      <h2>Signup</h2>
-      {error && <p className="error">{error}</p>}
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Address"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Phone"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="NID"
-        value={nid}
-        onChange={(e) => setNid(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Citizenship No."
-        value={citizenshipNo}
-        onChange={(e) => setCitizenshipNo(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-      />
-      <button onClick={handleSignup}>Signup</button>
+    <div className="main-content">
+      <div className="form-container">
+        <h2>Create Account</h2>
+        {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Full Name *</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>NID Number *</label>
+            <input
+              type="text"
+              name="nid"
+              value={formData.nid}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Citizenship Number *</label>
+            <input
+              type="text"
+              name="citizenship_no"
+              value={formData.citizenship_no}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Password *</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Confirm Password *</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <button type="submit" className="submit-button">Sign Up</button>
+        </form>
+      </div>
     </div>
   );
 };
